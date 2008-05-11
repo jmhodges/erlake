@@ -21,7 +21,7 @@ class ErlangProject < Rake::TaskLib
   attr_accessor :test_code_paths
   attr_accessor :test_include_paths
   attr_accessor :test_warnings
-  
+
   attr_reader :generated_files
 
   def initialize(proj_name, proj_directory)
