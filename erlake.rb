@@ -2,6 +2,7 @@ require 'rake'
 require 'rake/tasklib'
 
 module Erlake
+  Version = "0.1"
   class NoProjectDirectoryGivenError < StandardError; end
   class NoProjectNameGivenError < StandardError; end
   class NotAnErlangFileError < StandardError; end
