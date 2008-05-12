@@ -362,6 +362,11 @@ mochiweb = ErlangProject.new('mochiweb', File.join(this_dir, 'lib/mochiweb'))
 
 smerl = ErlangProject.new('smerl', File.join(this_dir, 'lib/smerl')) do |proj|
   proj.sources = ['smerl.erl']
+
+  # '../../ebin' is  './ebin' from this Rakefile.  This is because we
+  # evaluate all of the paths from the project directory given above (i.e.
+  # `File.join(this_dir, 'lib/smerl')` => ./lib/smerl/ )
+
   proj.output_path = '../../ebin'
 end
 
