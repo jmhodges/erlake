@@ -26,6 +26,9 @@ module Erlake
     attr_accessor :test_include_paths
     attr_accessor :test_warnings
 
+    attr_reader :extras
+    attr_reader :test_extras
+
     attr_reader :generated_files
 
     def initialize(proj_name, proj_directory)
@@ -124,6 +127,30 @@ module Erlake
       @dependencies
     end
 
+    def extras
+      @extras ||= []
+      @extras
+    end
+
+    def test_extras
+      @test_extras ||= []
+      @test_extras
+    end
+
+    def copy_extras(file_list, opts={})
+      opts[:to] ||= "doc"
+
+      @extras += {:files => file_list, :to => opts[:to] }
+    end
+
+    def copy_test_extras(file_list, opts={})
+      opts[:to] ||= test_output_path
+
+      @test_extras += {:files => file_list, :to => opts[:to]}
+    end
+
+    private
+
     def define
       fail "Name required" unless name
 
@@ -152,9 +179,21 @@ module Erlake
         desc "Build the dependencies of #{name}."
         task :build_dependencies => dependencies_build_tasks
 
+        desc "Copy the extra files over."
+        task :copy_extras do
+
+          extras.each do |hsh|
+            hsh[:files].each do |fn|
+              puts "Copying extra file #{fn} to #{hsh[:to]}"
+              syscopy(fn, hsh[:to])
+            end
+          end
+
+        end
+
         # FIXME edocs and extra files
         desc "Build #{name}."
-        task :build => [:build_dependencies, :build_sources, :build_app_sources]
+        task :build => [:copy_extras, :build_dependencies, :build_sources, :build_app_sources]
 
         desc "Remove all the generated files for #{name}."
         task :clean do
@@ -177,8 +216,19 @@ module Erlake
           end
         end
 
+        desc "Copy the extra files over for the tests."
+        task :copy_test_extras do
+
+          test_extras.each do |hsh|
+            hsh[:files].each do |fn|
+              syscopy(fn, hsh[:to])
+            end
+          end
+
+        end
+
         desc "Test #{name}."
-        task :test => :build_test_sources do
+        task :test => [:copy_test_extras, :build_test_sources] do
           old_dir = pwd
 
           # This is only done because I haven't worked out the extra/data/dist
@@ -250,8 +300,6 @@ module Erlake
     def dependencies_build_tasks
       tasks_from_dependencies("build")
     end
-
-    private
 
     def current_and_dependency_tasks(task_name)
       ["#{name}:#{task_name}"] + tasks_from_dependencies(task_name)
