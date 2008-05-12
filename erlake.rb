@@ -182,7 +182,7 @@ module Erlake
         end
 
         task :clean_test_sources do
-          generated_test_files.each do |file|
+          generated_test_files.each do |fn|
             File.delete(fn) if File.exist?(fn)
           end
         end
