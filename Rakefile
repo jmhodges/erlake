@@ -14,7 +14,7 @@ spec = Gem::Specification.new do |s|
   # s.autorequire       = "feedparser" # tHe 3vil according to Why.
   s.has_rdoc          = false # TODO: fix
   # s.rubyforge_project = 'erlake'
-
+  s.require_path = ''
   # Dependencies
   s.add_dependency('rake', '>=0.8.1')
 end
