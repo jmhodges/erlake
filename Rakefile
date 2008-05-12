@@ -42,8 +42,9 @@ class ErlangProject < Rake::TaskLib
 
     if block_given?
       yield self
-      define
     end
+
+    define
   end
 
   def set_defaults!
@@ -51,20 +52,16 @@ class ErlangProject < Rake::TaskLib
     self.sources = default_sources
     self.app_sources = default_app_sources
     self.include_paths = default_include_paths
-    self.dependencies = default_dependencies
     self.warnings = default_warnings
-
-    self.code_paths = [ output_path ]
 
     self.test_sources = default_test_sources
     self.test_output_path = default_test_output_path
-    self.test_code_paths = default_test_code_paths
     self.test_include_paths = default_test_include_paths
     self.test_warnings = default_test_warnings
   end
 
   def output_path=(dir)
-    @output_path = dir_join dir
+    @output_path = File.join(project_directory, dir)
   end
 
   def sources=(file_list)
@@ -79,23 +76,50 @@ class ErlangProject < Rake::TaskLib
     @include_paths = dir_join file_list
   end
 
-  def dependencies=(deps)
-    deps.each do |d|
+  def code_paths
+    @code_paths ||= [ output_path ] + dependencies.map{|d| d.output_path }
+    @code_paths
+  end
 
-      unless code_paths.include? d.output_path
-        self.code_paths << d.output_path
+  def code_paths=(paths)
+    @code_paths = paths.uniq
+
+    # Magic to make `code_paths += arr` and `code_paths << path` maintain
+    # the uniqueness of the paths.
+    class << @code_paths
+      def <<(path)
+        self.push(path) unless self.include?(path)
       end
     end
 
+    @code_paths
+  end
+
+  def test_code_paths
+    @test_code_paths ||= code_paths
+    @test_code_paths
+  end
+
+  def test_code_paths=(paths)
+    @test_code_paths = paths.uniq
+
+    class << @test_code_paths
+      def <<(path)
+        self.push(path) unless self.include?(path)
+      end
+    end
+  end
+
+  def dependencies=(deps)
+    self.code_paths += deps.map{|d| d.output_path}
+
+    # FIXME cycle detection and eigenclass magic
     @dependencies = deps
   end
 
   def dependencies
-    @dependencies.compact.uniq
-  end
-
-  def code_paths
-    @code_paths.compact.uniq
+    @dependencies ||= []
+    @dependencies
   end
 
   def define
@@ -122,18 +146,8 @@ class ErlangProject < Rake::TaskLib
 
       task :build_dependencies => dependencies_build_tasks
 
-      task :build => [:build_dependencies] do
-        # FIXME edocs and extra files
-
-        # FIXME this any could take a while. do something clever to make
-        # the output as nice as it is now.
-        if generated_files.any?{|fn| ! File.exist? fn }
-          puts "Building #{name}"
-
-          build_sources
-          build_app_sources
-        end
-      end # end build task
+      # FIXME edocs and extra files
+      task :build => [:build_dependencies, :build_sources, :build_app_sources]
 
       task :clean => [] do
 
@@ -145,6 +159,7 @@ class ErlangProject < Rake::TaskLib
       end # end clean task
 
       task :build_test_sources do
+
         test_sources.each do |file|
           erlc file,
           :to => test_output_path,
@@ -175,8 +190,11 @@ class ErlangProject < Rake::TaskLib
   end
 
   # Defines the tasks in Rake application instead of just its own namespace
-  def define!
-
+  def top_level_define!
+    task :build   =>  "#{name}:build"
+    task :clean   =>  current_and_dependency_tasks(:clean)
+    task :test    =>  "#{name}:test"
+    task :retest  =>  "#{name}:retest"
   end
 
   def generated_files
@@ -208,6 +226,10 @@ class ErlangProject < Rake::TaskLib
 
   private
 
+  def current_and_dependency_tasks(task_name)
+    ["#{name}:#{task_name}"] + tasks_from_dependencies(task_name)
+  end
+
   def tasks_from_dependencies(task_name)
     (dependencies || []).map {|d| "#{d.name}:#{task_name}" }
   end
@@ -226,8 +248,6 @@ class ErlangProject < Rake::TaskLib
 
   def default_include_paths; []; end
 
-  def default_dependencies; []; end
-
   def default_warnings; []; end
 
   def default_test_sources
@@ -236,10 +256,6 @@ class ErlangProject < Rake::TaskLib
 
   def default_test_output_path
     "tests/ebin"
-  end
-
-  def default_test_code_paths
-    code_paths || default_code_paths
   end
 
   def default_test_include_paths; []; end
@@ -266,7 +282,7 @@ class ErlangProject < Rake::TaskLib
 
     output_dir = opts[:to] || "./"
 
-    cps = code_path_args(opts[:code_paths])
+    cps = code_path_args(opts[:paths])
     incs = include_args(opts[:include])
     warns = warning_args(opts[:warnings])
 
@@ -293,7 +309,7 @@ class ErlangProject < Rake::TaskLib
       raise ErlangBuildError.new("Build of '#{filename}' failed with output:\n#{output}\n")
     end
 
-    puts "Built #{full_beam}.\n"
+    puts "Built #{full_beam}.\n\n"
     return true
   end
 
@@ -307,7 +323,7 @@ class ErlangProject < Rake::TaskLib
 
   def warning_args(warnings)
     if warnings && ! warnings.empty?
-      "-W #{opts[:warnings].join(' ')} "
+      "-W #{warnings.join(' ')} "
     else
       ""
     end
@@ -337,15 +353,17 @@ eunit = ErlangProject.new('eunit', File.join(this_dir, 'lib/eunit')) do |proj|
     src/file_monitor.erl
     src/autoload.erl
   )
+
   proj.include_paths = ["include"]
   proj.warnings = %w(+warn_unused_vars +nowarn_shadow_vars +warn_unused_import)
 end
 
 mochiweb = ErlangProject.new('mochiweb', File.join(this_dir, 'lib/mochiweb'))
 
+puts "WTMOC #{mochiweb.output_path.inspect}"
 smerl = ErlangProject.new('smerl', File.join(this_dir, 'lib/smerl')) do |proj|
   proj.sources = ['smerl.erl']
-  proj.output_directory = '../../ebin'
+  proj.output_path = '../../ebin'
 end
 
 recess = ErlangProject.new('recess', this_dir) do |proj|
@@ -353,4 +371,4 @@ recess = ErlangProject.new('recess', this_dir) do |proj|
   proj.test_include_paths = ["./lib/include/eunit"]
 end
 
-recess.define!
+recess.top_level_define!
