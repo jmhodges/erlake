@@ -360,7 +360,6 @@ end
 
 mochiweb = ErlangProject.new('mochiweb', File.join(this_dir, 'lib/mochiweb'))
 
-puts "WTMOC #{mochiweb.output_path.inspect}"
 smerl = ErlangProject.new('smerl', File.join(this_dir, 'lib/smerl')) do |proj|
   proj.sources = ['smerl.erl']
   proj.output_path = '../../ebin'
