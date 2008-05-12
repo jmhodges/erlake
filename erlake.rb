@@ -129,7 +129,7 @@ module Erlake
 
       namespace name do
 
-        desc "Build the sources for #{name}"
+        desc "Build the sources for #{name}."
         task :build_sources do
 
           sources.each do |file|
@@ -142,31 +142,31 @@ module Erlake
           end
         end
 
-        desc "Build the app sources for #{name}"
+        desc "Build the app sources for #{name}."
         task :build_app_sources do
           app_sources.each do |fn|
             install( fn, File.join(output_path, File.basename(fn)) )
           end
         end
 
-        desc "Build the dependencies of #{name}"
+        desc "Build the dependencies of #{name}."
         task :build_dependencies => dependencies_build_tasks
 
         # FIXME edocs and extra files
-        desc "Build #{name}"
+        desc "Build #{name}."
         task :build => [:build_dependencies, :build_sources, :build_app_sources]
 
-        desc "Clean #{name}"
+        desc "Remove all the generated files for #{name}."
         task :clean do
 
           if generated_files.any?{|fn| File.exist? fn}
-            puts "Cleaning #{name}"
+            puts "Cleaning #{name}."
 
             generated_files.each{|fn| File.delete(fn) if File.exist?(fn) }
           end
         end # end clean task
 
-        desc "Build the test sources for #{name}"
+        desc "Build the test sources for #{name}."
         task :build_test_sources do
 
           test_sources.each do |file|
@@ -177,7 +177,7 @@ module Erlake
           end
         end
 
-        desc "Test #{name}"
+        desc "Test #{name}."
         task :test => :build_test_sources do
           old_dir = pwd
 
@@ -189,30 +189,31 @@ module Erlake
           chdir old_dir
         end
 
-        desc "Clean the test sources for #{name}"
+        desc "Clean the test sources for #{name}."
         task :clean_test_sources do
           generated_test_files.each do |fn|
             File.delete(fn) if File.exist?(fn)
           end
         end
 
-        desc "Retest #{name}"
+        desc "Retest #{name}."
         task :retest => [:clean_test_sources, :test]
+
       end
     end
 
     # Defines the tasks in Rake application instead of just its own namespace
     def top_level_define!
-      desc "Build #{name}"
+      desc "Build #{name}."
       task :build   =>  "#{name}:build"
 
-      desc "Clean #{name} and its dependencies"
+      desc "Clean #{name} and its dependencies."
       task :clean   =>  current_and_dependency_tasks(:clean)
 
-      desc "Test #{name}"
+      desc "Test #{name}."
       task :test    =>  "#{name}:test"
 
-      desc "Retest #{name}"
+      desc "Retest #{name}."
       task :retest  =>  "#{name}:retest"
     end
 
