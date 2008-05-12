@@ -199,6 +199,10 @@ module Erlake
         desc "Retest #{name}."
         task :retest => [:clean_test_sources, :test]
 
+        desc "Open an erl console with #{name} and its dependencies available to be imported."
+        task :erl => :build do
+          sh "erl #{code_path_args(code_paths)} #{include_args(include_paths)} "
+        end
       end
     end
 
@@ -215,6 +219,9 @@ module Erlake
 
       desc "Retest #{name}."
       task :retest  =>  "#{name}:retest"
+
+      desc "Open an erl console with #{name} and its dependencies available to be imported."
+      task :erl => :build
     end
 
     def generated_files
