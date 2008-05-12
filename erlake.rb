@@ -177,7 +177,7 @@ module Erlake
           # file stuff which would be included for tests
 
           chdir test_output_path
-          sh "erl -noshell #{code_path_args(test_code_paths)} #{include_args(test_include_paths)} #{warning_args(test_warnings)}-o #{test_output_path} -s test_runner run_all"
+          sh "erl -noshell #{code_path_args(test_code_paths)} #{include_args(test_include_paths)} #{warning_args(test_warnings)} -o #{test_output_path} -s test_runner run_all"
           chdir old_dir
         end
 
