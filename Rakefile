@@ -314,9 +314,12 @@ class ErlangProject < Rake::TaskLib
   end
 end
 
+# Examples
+
 this_dir = File.dirname(__FILE__)
 
 eunit = ErlangProject.new('eunit', File.join(this_dir, 'lib/eunit')) do |proj|
+
   # Required ordering.
   proj.sources = %w(
     src/eunit_autoexport.erl
@@ -340,8 +343,13 @@ end
 
 mochiweb = ErlangProject.new('mochiweb', File.join(this_dir, 'lib/mochiweb'))
 
+smerl = ErlangProject.new('smerl', File.join(this_dir, 'lib/smerl')) do |proj|
+  proj.sources = ['smerl.erl']
+  proj.output_directory = '../../ebin'
+end
+
 recess = ErlangProject.new('recess', this_dir) do |proj|
-  proj.dependencies = [eunit]
+  proj.dependencies = [eunit, mochiweb, smerl]
   proj.test_include_paths = ["./lib/include/eunit"]
 end
 
