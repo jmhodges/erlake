@@ -1,4 +1,5 @@
-require '../erlange_project'
+require '../erlake'
+ErlangProject = Erlake::ErlangProject
 
 this_dir = File.dirname(__FILE__)
 
