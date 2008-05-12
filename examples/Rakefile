@@ -1,0 +1,46 @@
+require '../erlange_project'
+
+this_dir = File.dirname(__FILE__)
+
+eunit = ErlangProject.new('eunit', File.join(this_dir, 'lib/eunit')) do |proj|
+
+  # Required ordering.
+  proj.sources = %w(
+    src/eunit_autoexport.erl
+    src/eunit_striptests.erl
+    src/eunit.erl
+    src/eunit_tests.erl
+    src/eunit_server.erl
+    src/eunit_proc.erl
+    src/eunit_serial.erl
+    src/eunit_test.erl
+    src/eunit_lib.erl
+    src/eunit_data.erl
+    src/eunit_tty.erl
+    src/code_monitor.erl
+    src/file_monitor.erl
+    src/autoload.erl
+  )
+
+  proj.include_paths = ["include"]
+  proj.warnings = %w(+warn_unused_vars +nowarn_shadow_vars +warn_unused_import)
+end
+
+mochiweb = ErlangProject.new('mochiweb', File.join(this_dir, 'lib/mochiweb'))
+
+smerl = ErlangProject.new('smerl', File.join(this_dir, 'lib/smerl')) do |proj|
+  proj.sources = ['smerl.erl']
+
+  # '../../ebin' is  './ebin' from this Rakefile.  This is because we
+  # evaluate all of the paths from the project directory given above (i.e.
+  # `File.join(this_dir, 'lib/smerl')` => ./lib/smerl/ )
+
+  proj.output_path = '../../ebin'
+end
+
+recess = ErlangProject.new('recess', this_dir) do |proj|
+  proj.dependencies = [eunit, mochiweb, smerl]
+  proj.test_include_paths = ["./lib/include/eunit"]
+end
+
+recess.top_level_define!
