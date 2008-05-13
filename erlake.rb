@@ -101,7 +101,7 @@ module Erlake
     end
 
     def test_code_paths
-      @test_code_paths ||= code_paths
+      @test_code_paths ||= [ test_output_path ] + code_paths
       @test_code_paths
     end
 
@@ -251,9 +251,7 @@ module Erlake
           # This is only done because I haven't worked out the extra/data/dist
           # file stuff which would be included for tests
 
-          chdir test_output_path
-          sh "erl -noshell #{code_path_args(test_code_paths)} #{include_args(test_include_paths)} #{warning_args(test_warnings)} -o #{test_output_path} -s test_runner run_all"
-          chdir old_dir
+          sh "erl -noshell #{code_path_args(test_code_paths)} #{include_args(test_include_paths)} #{warning_args(test_warnings)} -s test_runner run_all"
         end
 
         desc "Clean test extras for #{name}."
