@@ -146,7 +146,6 @@ module Erlake
     def copy_test_extras(file_list, opts={})
       opts[:to] ||= test_output_path
       @test_extras ||= []
-      puts "HERE WITH #{file_list}"
       @test_extras << {:files => file_list, :to => opts[:to]}
     end
 
