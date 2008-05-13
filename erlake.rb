@@ -298,7 +298,7 @@ module Erlake
       task :retest  =>  "#{name}:retest"
 
       desc "Open an erl console with #{name} and its dependencies available to be imported."
-      task :erl => :build
+      task :erl => "#{name}:erl"
     end
 
     def generated_files
