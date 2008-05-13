@@ -224,7 +224,7 @@ module Erlake
         task :clean => [:clean_tests, :clean_extras, :clean_sources]
 
         desc "Build the test sources for #{name}."
-        task :build_test_sources do
+        task :build_tests => [:build] do
 
           test_sources.each do |file|
             erlc file,
@@ -246,7 +246,7 @@ module Erlake
         end
 
         desc "Test #{name}."
-        task :test => [:copy_test_extras, :build_test_sources] do
+        task :test => [:copy_test_extras, :build_tests] do
           old_dir = pwd
 
           # This is only done because I haven't worked out the extra/data/dist
