@@ -47,4 +47,4 @@ recess = ErlangProject.new('recess', this_dir) do |proj|
   proj.copy_test_extras FileList["tests/data/*"], :to => "./tests/ebin"
 end
 
-recess.top_level_define!
+recess.use_globally!

@@ -139,14 +139,19 @@ module Erlake
 
     def copy_extras(file_list, opts={})
       opts[:to] ||= "doc"
-
-      @extras += {:files => file_list, :to => opts[:to] }
+      @extras ||= []
+      @extras << {:files => file_list, :to => opts[:to] }
     end
 
     def copy_test_extras(file_list, opts={})
       opts[:to] ||= test_output_path
+      @test_extras ||= []
+      puts "HERE WITH #{file_list}"
+      @test_extras << {:files => file_list, :to => opts[:to]}
+    end
 
-      @test_extras += {:files => file_list, :to => opts[:to]}
+    def use_globally!
+      top_level_define!
     end
 
     private
@@ -185,7 +190,7 @@ module Erlake
           extras.each do |hsh|
             hsh[:files].each do |fn|
               puts "Copying extra file #{fn} to #{hsh[:to]}"
-              syscopy(fn, hsh[:to])
+              copy(fn, hsh[:to])
             end
           end
 
@@ -195,15 +200,28 @@ module Erlake
         desc "Build #{name}."
         task :build => [:copy_extras, :build_dependencies, :build_sources, :build_app_sources]
 
-        desc "Remove all the generated files for #{name}."
-        task :clean do
+        desc "Remove the extra files for #{name}."
+        task :clean_extras do
+          extras.each do |hsh|
+            hsh[:files].each do |fn|
+              rm File.join(hsh[:to], File.basename(fn))
+            end
+          end
+
+        end
+
+        desc "Remove all the files generated from the source files "
+        task :clean_sources do
 
           if generated_files.any?{|fn| File.exist? fn}
             puts "Cleaning #{name}."
 
             generated_files.each{|fn| File.delete(fn) if File.exist?(fn) }
           end
-        end # end clean task
+        end
+
+        desc "Remove all the generated files for #{name}."
+        task :clean => [:clean_tests, :clean_extras, :clean_sources]
 
         desc "Build the test sources for #{name}."
         task :build_test_sources do
@@ -221,7 +239,7 @@ module Erlake
 
           test_extras.each do |hsh|
             hsh[:files].each do |fn|
-              syscopy(fn, hsh[:to])
+              copy(fn, hsh[:to])
             end
           end
 
@@ -239,12 +257,24 @@ module Erlake
           chdir old_dir
         end
 
+        desc "Clean test extras for #{name}."
+        task :clean_test_extras do
+          test_extras.each do |hsh|
+            hsh[:files].each do |fn|
+              rm File.join(hsh[:to], File.basename(fn))
+            end
+          end
+        end
+
         desc "Clean the test sources for #{name}."
         task :clean_test_sources do
           generated_test_files.each do |fn|
             File.delete(fn) if File.exist?(fn)
           end
         end
+
+        desc "Clean up the tests for #{name}."
+        task :clean_tests => [:clean_test_extras, :clean_test_sources]
 
         desc "Retest #{name}."
         task :retest => [:clean_test_sources, :test]
